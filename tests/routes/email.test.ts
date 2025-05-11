@@ -3,7 +3,7 @@ import { getTestServer } from "tests/fixtures/get-test-server"
 import { ServerClient as PostmarkClient } from "postmark" // Official Postmark client
 
 test("POST /email should store email and return Postmark-like response", async () => {
-  const { url, server, axios: serverAxios } = await getTestServer()
+  const { url, server, ky: serverKy } = await getTestServer()
 
   // Use the official Postmark client, configured to point to our test server
   const client = new PostmarkClient("YOUR_SERVER_TOKEN", {
@@ -33,12 +33,11 @@ test("POST /email should store email and return Postmark-like response", async (
   expect(response.To).toBe(emailData.To)
 
   // Verify the email was stored using the _fake/emails/list endpoint
-  // Use the axios instance associated with the server the email was sent to.
-  const listRes = await serverAxios.get("/_fake/emails/list")
+  // Use the ky instance associated with the server the email was sent to.
+  const listResData = await serverKy.get("_fake/emails/list").json<{emails: any[]}>()
 
-  expect(listRes.status).toBe(200)
-  expect(listRes.data.emails).toBeArrayOfSize(1)
-  const storedEmail = listRes.data.emails[0]
+  expect(listResData.emails).toBeArrayOfSize(1)
+  const storedEmail = listResData.emails[0]
 
   expect(storedEmail.From).toBe(emailData.From)
   expect(storedEmail.To).toBe(emailData.To)

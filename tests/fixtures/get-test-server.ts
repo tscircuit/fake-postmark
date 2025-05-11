@@ -1,12 +1,12 @@
 import { afterEach } from "bun:test"
 import { tmpdir } from "node:os"
-import defaultAxios from "redaxios"
+import kyDefault from "ky" // Changed from ky-universal
 import { startServer } from "./start-server"
 
 interface TestFixture {
   url: string
   server: any
-  axios: typeof defaultAxios
+  ky: typeof kyDefault
 }
 
 export const getTestServer = async (): Promise<TestFixture> => {
@@ -20,8 +20,9 @@ export const getTestServer = async (): Promise<TestFixture> => {
   })
 
   const url = `http://127.0.0.1:${port}`
-  const axios = defaultAxios.create({
-    baseURL: url,
+  const ky = kyDefault.create({
+    prefixUrl: url,
+    throwHttpErrors: true, // Default, but explicit
   })
 
   afterEach(async () => {
@@ -32,6 +33,6 @@ export const getTestServer = async (): Promise<TestFixture> => {
   return {
     url,
     server,
-    axios,
+    ky,
   }
 }

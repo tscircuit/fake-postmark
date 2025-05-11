@@ -2,7 +2,7 @@ import { createStore, type StoreApi } from "zustand/vanilla"
 // import { immer } from "zustand/middleware/immer" // Not currently used, but available
 import { hoist, type HoistedStoreApi } from "zustand-hoist"
 
-import { databaseSchema, type DatabaseSchema, type Thing, type PostmarkEmail } from "./schema.ts"
+import { databaseSchema, type DatabaseSchema, type Thing, type PostmarkEmail, type EmailTemplate } from "./schema.ts"
 import { combine } from "zustand/middleware"
 import { v4 as uuidv4 } from "uuid"
 
@@ -14,6 +14,13 @@ export type DbClient = ReturnType<typeof createDatabase>
 
 // Define the input type for adding an email, omitting server-generated fields
 export type NewPostmarkEmail = Omit<PostmarkEmail, "MessageID" | "SubmittedAt" | "ErrorCode" | "StatusMessage">
+
+// Input type for adding an email template, omitting server-generated fields
+export type NewEmailTemplate = Omit<EmailTemplate, "TemplateId" | "Active"> & {
+  // Making Subject optional here, validation will happen at route level or within addEmailTemplate
+  Subject?: string;
+};
+
 
 // Input type for adding a templated email.
 // Subject, HtmlBody, TextBody are omitted as they will be generated.
@@ -93,5 +100,37 @@ const initializer = combine(databaseSchema.parse({}), (set, get) => ({
       postmarkEmails: [...state.postmarkEmails, newEmail],
     }));
     return newEmail;
+  },
+  addEmailTemplate: (templateData: NewEmailTemplate): EmailTemplate => {
+    let newTemplateId: number;
+    let finalSubject = templateData.Subject;
+
+    if (templateData.TemplateType === "Layout" && templateData.Subject) {
+      // As per Postmark: "Subjects are not allowed for layout templates and will result in an API error."
+      // For the fake server, we can choose to ignore it or throw an error.
+      // Let's clear it if provided for a layout, actual API might error.
+      // The route level validation should ideally prevent this.
+      finalSubject = undefined;
+    }
+
+
+    const createdTemplate: EmailTemplate = {
+      ...templateData,
+      TemplateId: 0, // Placeholder, will be set by zustand set function
+      Active: true,
+      Subject: finalSubject,
+      Alias: templateData.Alias ?? null, // Ensure Alias is null if not provided
+      LayoutTemplate: templateData.LayoutTemplate ?? null, // Ensure LayoutTemplate is null if not provided
+    };
+
+    set((state) => {
+      newTemplateId = state.templateIdCounter;
+      createdTemplate.TemplateId = newTemplateId; // Assign the actual ID
+      return {
+        emailTemplates: [...state.emailTemplates, createdTemplate],
+        templateIdCounter: state.templateIdCounter + 1,
+      }
+    });
+    return createdTemplate;
   },
 }))

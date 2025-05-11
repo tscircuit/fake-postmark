@@ -41,9 +41,26 @@ export const postmarkEmailSchema = z.object({
 })
 export type PostmarkEmail = z.infer<typeof postmarkEmailSchema>
 
+// Schema for Email Templates
+export const emailTemplateSchema = z.object({
+  TemplateId: z.number().int(),
+  Name: z.string(),
+  Alias: z.string().nullable(),
+  Subject: z.string().optional(), // Optional because Layout templates don't have subjects
+  HtmlBody: z.string().optional(),
+  TextBody: z.string().optional(),
+  TemplateType: z.enum(["Standard", "Layout"]),
+  LayoutTemplate: z.string().nullable(), // Alias of the layout template, if used
+  Active: z.boolean(),
+  // AssociatedServerId: z.number(), // We might not need this for the fake server
+})
+export type EmailTemplate = z.infer<typeof emailTemplateSchema>
+
 export const databaseSchema = z.object({
   idCounter: z.number().default(0),
+  templateIdCounter: z.number().default(1), // Start template IDs from 1
   things: z.array(thingSchema).default([]),
   postmarkEmails: z.array(postmarkEmailSchema).default([]),
+  emailTemplates: z.array(emailTemplateSchema).default([]),
 })
 export type DatabaseSchema = z.infer<typeof databaseSchema>

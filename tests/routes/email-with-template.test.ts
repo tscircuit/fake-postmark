@@ -4,7 +4,7 @@ import { ServerClient as PostmarkClient } from "postmark" // Official Postmark c
 import type { PostmarkEmail } from "lib/db/schema"
 
 test("POST /email/withTemplate should store email (using TemplateId) and return Postmark-like response", async () => {
-  const { url, axios: serverAxios } = await getTestServer()
+  const { url, ky: serverKy } = await getTestServer()
 
   const client = new PostmarkClient("YOUR_SERVER_TOKEN", {
     requestHost: new URL(url).host,
@@ -34,10 +34,9 @@ test("POST /email/withTemplate should store email (using TemplateId) and return 
   expect(response.To).toBe(emailData.To)
 
   // Verify the email was stored using the _fake/emails/list endpoint
-  const listRes = await serverAxios.get("/_fake/emails/list")
-  expect(listRes.status).toBe(200)
+  const listResData = await serverKy.get("_fake/emails/list").json<{emails: PostmarkEmail[]}>()
   
-  const storedEmail = listRes.data.emails.find((e: PostmarkEmail) => e.MessageID === response.MessageID)
+  const storedEmail = listResData.emails.find((e: PostmarkEmail) => e.MessageID === response.MessageID)
   expect(storedEmail).toBeDefined()
 
   if (!storedEmail) return // Type guard
@@ -58,7 +57,7 @@ test("POST /email/withTemplate should store email (using TemplateId) and return 
 })
 
 test("POST /email/withTemplate should store email (using TemplateAlias) and return Postmark-like response", async () => {
-  const { url, axios: serverAxios } = await getTestServer()
+  const { url, ky: serverKy } = await getTestServer()
 
   const client = new PostmarkClient("YOUR_SERVER_TOKEN", {
     requestHost: new URL(url).host,
@@ -83,10 +82,9 @@ test("POST /email/withTemplate should store email (using TemplateAlias) and retu
   expect(response.MessageID).toBeString()
 
   // Verify the email was stored
-  const listRes = await serverAxios.get("/_fake/emails/list")
-  expect(listRes.status).toBe(200)
+  const listResData = await serverKy.get("_fake/emails/list").json<{emails: PostmarkEmail[]}>()
 
-  const storedEmail = listRes.data.emails.find((e: PostmarkEmail) => e.MessageID === response.MessageID)
+  const storedEmail = listResData.emails.find((e: PostmarkEmail) => e.MessageID === response.MessageID)
   expect(storedEmail).toBeDefined()
 
   if (!storedEmail) return // Type guard
@@ -106,7 +104,7 @@ test("POST /email/withTemplate should store email (using TemplateAlias) and retu
 })
 
 test("POST /email/withTemplate should store email (using both TemplateId and TemplateAlias)", async () => {
-  const { url, axios: serverAxios } = await getTestServer();
+  const { url, ky: serverKy } = await getTestServer();
 
   const client = new PostmarkClient("YOUR_SERVER_TOKEN", {
     requestHost: new URL(url).host,
@@ -130,8 +128,8 @@ test("POST /email/withTemplate should store email (using both TemplateId and Tem
   expect(response.ErrorCode).toBe(0);
   expect(response.Message).toBe("OK");
 
-  const listRes = await serverAxios.get("/_fake/emails/list");
-  const storedEmail = listRes.data.emails.find((e: PostmarkEmail) => e.MessageID === response.MessageID);
+  const listResData = await serverKy.get("_fake/emails/list").json<{emails: PostmarkEmail[]}>();
+  const storedEmail = listResData.emails.find((e: PostmarkEmail) => e.MessageID === response.MessageID);
   expect(storedEmail).toBeDefined();
 
   if (!storedEmail) return;
