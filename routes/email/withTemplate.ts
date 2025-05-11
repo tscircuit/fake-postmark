@@ -63,7 +63,7 @@ export default withRouteSpec({
   jsonResponse: sendEmailResponseSchema,
   auth: "none", // Assuming no auth for this fake endpoint
 } as const)(async (req, ctx) => {
-  const emailDataFromRequest = await req.json()
+  const emailDataFromRequest = req.jsonBody
 
   // Transform Headers from array to record for database client
   const headersRecord = emailDataFromRequest.Headers

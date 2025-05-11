@@ -55,7 +55,7 @@ export default withRouteSpec({
     .optional(),
   auth: "none", // Assuming no auth for this fake endpoint for now
 } as const)(async (req, ctx) => {
-  const emailDataFromRequest = await req.json()
+  const emailDataFromRequest = req.jsonBody
 
   // Transform Headers from Postmark's array format to our simplified record format if necessary
   // For this fake, we'll assume the db schema's `Headers: z.record(z.string())` is sufficient
