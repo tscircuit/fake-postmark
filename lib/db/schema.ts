@@ -34,6 +34,10 @@ export const postmarkEmailSchema = z.object({
   SubmittedAt: z.string(), // ISO DateTime
   ErrorCode: z.number().default(0),
   StatusMessage: z.string().default("OK"), // "OK" or error message
+  // New fields for templated emails
+  TemplateId: z.number().int().optional(),
+  TemplateAlias: z.string().optional(),
+  TemplateModel: z.record(z.any()).optional(),
 })
 export type PostmarkEmail = z.infer<typeof postmarkEmailSchema>
 
