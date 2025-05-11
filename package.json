@@ -26,6 +26,8 @@
     "start": "bun run dev",
     "dev": "winterspec dev",
     "build": "winterspec bundle -o dist/bundle.js",
-    "next:dev": "next dev"
+    "next:dev": "next dev",
+    "format": "biome format --write .",
+    "format:check": "biome format ."
   }
 }

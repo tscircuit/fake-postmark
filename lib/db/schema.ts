@@ -24,12 +24,16 @@ export const postmarkEmailSchema = z.object({
   TrackOpens: z.boolean().optional(),
   TrackLinks: z.string().optional(), // None, HtmlAndText, HtmlOnly, TextOnly
   Metadata: z.record(z.string()).optional(),
-  Attachments: z.array(z.object({
-    Name: z.string(),
-    Content: z.string(),
-    ContentType: z.string(),
-    ContentID: z.string().nullable().optional(),
-  })).optional(),
+  Attachments: z
+    .array(
+      z.object({
+        Name: z.string(),
+        Content: z.string(),
+        ContentType: z.string(),
+        ContentID: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
   MessageStream: z.string().optional(),
   SubmittedAt: z.string(), // ISO DateTime
   ErrorCode: z.number().default(0),

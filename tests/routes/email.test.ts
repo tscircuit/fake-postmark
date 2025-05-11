@@ -34,7 +34,9 @@ test("POST /email should store email and return Postmark-like response", async (
 
   // Verify the email was stored using the _fake/emails/list endpoint
   // Use the ky instance associated with the server the email was sent to.
-  const listResData = await serverKy.get("_fake/emails/list").json<{emails: any[]}>()
+  const listResData = await serverKy
+    .get("_fake/emails/list")
+    .json<{ emails: any[] }>()
 
   expect(listResData.emails).toBeArrayOfSize(1)
   const storedEmail = listResData.emails[0]

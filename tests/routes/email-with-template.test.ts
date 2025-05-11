@@ -34,9 +34,13 @@ test("POST /email/withTemplate should store email (using TemplateId) and return 
   expect(response.To).toBe(emailData.To)
 
   // Verify the email was stored using the _fake/emails/list endpoint
-  const listResData = await serverKy.get("_fake/emails/list").json<{emails: PostmarkEmail[]}>()
-  
-  const storedEmail = listResData.emails.find((e: PostmarkEmail) => e.MessageID === response.MessageID)
+  const listResData = await serverKy
+    .get("_fake/emails/list")
+    .json<{ emails: PostmarkEmail[] }>()
+
+  const storedEmail = listResData.emails.find(
+    (e: PostmarkEmail) => e.MessageID === response.MessageID,
+  )
   expect(storedEmail).toBeDefined()
 
   if (!storedEmail) return // Type guard
@@ -48,12 +52,14 @@ test("POST /email/withTemplate should store email (using TemplateId) and return 
   expect(storedEmail.TemplateId).toBe(emailData.TemplateId)
   expect(storedEmail.TemplateAlias).toBeUndefined()
   expect(storedEmail.TemplateModel).toEqual(emailData.TemplateModel)
-  
+
   // Check generated fields (basic check for fake implementation)
   expect(storedEmail.Subject).toContain(`ID: ${emailData.TemplateId}`)
   expect(storedEmail.Subject).toContain(`Alias: N/A`)
   expect(storedEmail.HtmlBody).toContain(`Template ID: ${emailData.TemplateId}`)
-  expect(storedEmail.HtmlBody).toContain(JSON.stringify(emailData.TemplateModel))
+  expect(storedEmail.HtmlBody).toContain(
+    JSON.stringify(emailData.TemplateModel),
+  )
 })
 
 test("POST /email/withTemplate should store email (using TemplateAlias) and return Postmark-like response", async () => {
@@ -82,9 +88,13 @@ test("POST /email/withTemplate should store email (using TemplateAlias) and retu
   expect(response.MessageID).toBeString()
 
   // Verify the email was stored
-  const listResData = await serverKy.get("_fake/emails/list").json<{emails: PostmarkEmail[]}>()
+  const listResData = await serverKy
+    .get("_fake/emails/list")
+    .json<{ emails: PostmarkEmail[] }>()
 
-  const storedEmail = listResData.emails.find((e: PostmarkEmail) => e.MessageID === response.MessageID)
+  const storedEmail = listResData.emails.find(
+    (e: PostmarkEmail) => e.MessageID === response.MessageID,
+  )
   expect(storedEmail).toBeDefined()
 
   if (!storedEmail) return // Type guard
@@ -99,17 +109,21 @@ test("POST /email/withTemplate should store email (using TemplateAlias) and retu
   // Check generated fields
   expect(storedEmail.Subject).toContain(`ID: N/A`)
   expect(storedEmail.Subject).toContain(`Alias: ${emailData.TemplateAlias}`)
-  expect(storedEmail.HtmlBody).toContain(`Template Alias: ${emailData.TemplateAlias}`)
-  expect(storedEmail.HtmlBody).toContain(JSON.stringify(emailData.TemplateModel))
+  expect(storedEmail.HtmlBody).toContain(
+    `Template Alias: ${emailData.TemplateAlias}`,
+  )
+  expect(storedEmail.HtmlBody).toContain(
+    JSON.stringify(emailData.TemplateModel),
+  )
 })
 
 test("POST /email/withTemplate should store email (using both TemplateId and TemplateAlias)", async () => {
-  const { url, ky: serverKy } = await getTestServer();
+  const { url, ky: serverKy } = await getTestServer()
 
   const client = new PostmarkClient("YOUR_SERVER_TOKEN", {
     requestHost: new URL(url).host,
     useHttps: false,
-  });
+  })
 
   const emailData = {
     From: "sender-both@example.com",
@@ -119,24 +133,28 @@ test("POST /email/withTemplate should store email (using both TemplateId and Tem
     TemplateModel: {
       user_id: "user456",
     },
-  };
+  }
 
   // The Postmark client might prioritize one if both are sent.
   // Our Zod schema allows both. The db function stores both if provided.
-  const response = await client.sendEmailWithTemplate(emailData);
+  const response = await client.sendEmailWithTemplate(emailData)
 
-  expect(response.ErrorCode).toBe(0);
-  expect(response.Message).toBe("OK");
+  expect(response.ErrorCode).toBe(0)
+  expect(response.Message).toBe("OK")
 
-  const listResData = await serverKy.get("_fake/emails/list").json<{emails: PostmarkEmail[]}>();
-  const storedEmail = listResData.emails.find((e: PostmarkEmail) => e.MessageID === response.MessageID);
-  expect(storedEmail).toBeDefined();
+  const listResData = await serverKy
+    .get("_fake/emails/list")
+    .json<{ emails: PostmarkEmail[] }>()
+  const storedEmail = listResData.emails.find(
+    (e: PostmarkEmail) => e.MessageID === response.MessageID,
+  )
+  expect(storedEmail).toBeDefined()
 
-  if (!storedEmail) return;
+  if (!storedEmail) return
 
-  expect(storedEmail.TemplateId).toBe(emailData.TemplateId);
-  expect(storedEmail.TemplateAlias).toBe(emailData.TemplateAlias);
+  expect(storedEmail.TemplateId).toBe(emailData.TemplateId)
+  expect(storedEmail.TemplateAlias).toBe(emailData.TemplateAlias)
   // Check generated subject based on how addTemplatedPostmarkEmail prioritizes
-  expect(storedEmail.Subject).toContain(`ID: ${emailData.TemplateId}`);
-  expect(storedEmail.Subject).toContain(`Alias: ${emailData.TemplateAlias}`);
-});
+  expect(storedEmail.Subject).toContain(`ID: ${emailData.TemplateId}`)
+  expect(storedEmail.Subject).toContain(`Alias: ${emailData.TemplateAlias}`)
+})
