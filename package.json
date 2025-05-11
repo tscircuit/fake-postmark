@@ -1,5 +1,6 @@
 {
   "name": "@tscircuit/fake-postmark",
+  "version": "0.0.1",
   "main": "dist/bundle.js",
   "type": "module",
   "devDependencies": {
