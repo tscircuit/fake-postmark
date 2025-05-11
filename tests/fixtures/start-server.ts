@@ -27,6 +27,7 @@ export const startServer = async ({
   ]
 
   const server = Bun.serve({
+    hostname: "127.0.0.1",
     fetch: (bunReq) => {
       const req = new EdgeRuntimeRequest(bunReq.url, {
         headers: bunReq.headers,

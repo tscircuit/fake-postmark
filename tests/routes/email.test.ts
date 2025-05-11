@@ -3,11 +3,11 @@ import { getTestServer } from "tests/fixtures/get-test-server"
 import { ServerClient as PostmarkClient } from "postmark" // Official Postmark client
 
 test("POST /email should store email and return Postmark-like response", async () => {
-  const { url, server } = await getTestServer()
+  const { url, server, axios: serverAxios } = await getTestServer()
 
   // Use the official Postmark client, configured to point to our test server
   const client = new PostmarkClient("YOUR_SERVER_TOKEN", {
-    requestHost: url,
+    requestHost: new URL(url).host, // Extract 'hostname:port' from the full URL
     useHttps: false,
   })
 
@@ -33,26 +33,8 @@ test("POST /email should store email and return Postmark-like response", async (
   expect(response.To).toBe(emailData.To)
 
   // Verify the email was stored using the _fake/emails/list endpoint
-  const { axios } = await getTestServer({
-    port: server.port, // Re-use the same server instance if possible or ensure clean state
-    dbInstance: (server as any).db, // This part is tricky, test server needs to share db or state
-    // For now, let's assume getTestServer can fetch from the same running instance
-    // Or, more simply, use the axios from the *same* getTestServer call
-  })
-
-  // Fetching the list of emails
-  // Note: The test server setup might need adjustment to ensure `axios` from a new `getTestServer`
-  // call can access the state of the server started by the first call.
-  // A simpler way for this specific test is to use the `axios` instance from the initial `getTestServer` call
-  // if the server remains running and shares state.
-  // However, `getTestServer` typically creates a new server or a new isolated context.
-  // For this example, we'll assume we can query the same server instance.
-  // This might require `getTestServer` to return the same server if called with the same port,
-  // or for the server state (like the in-memory db) to be accessible/shared.
-
-  // Let's use the original server's port to create a new axios client to query it.
-  // This assumes the server started by the first `getTestServer()` is still running.
-  const listRes = await defaultAxios.get(`${url}/_fake/emails/list`)
+  // Use the axios instance associated with the server the email was sent to.
+  const listRes = await serverAxios.get("/_fake/emails/list")
 
   expect(listRes.status).toBe(200)
   expect(listRes.data.emails).toBeArrayOfSize(1)
@@ -69,6 +51,3 @@ test("POST /email should store email and return Postmark-like response", async (
 
   // Clean up server if necessary (afterEach in getTestServer should handle this)
 })
-
-// Need to import defaultAxios if used directly
-import defaultAxios from "redaxios"
