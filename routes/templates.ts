@@ -12,20 +12,29 @@ const createTemplateBaseBodySchema = z.object({
 })
 
 // Discriminated union for TemplateType specific fields
-const createTemplateBodySchema = z.discriminatedUnion("TemplateType", [
-  createTemplateBaseBodySchema.extend({
-    TemplateType: z.literal("Standard").default("Standard"),
-    Subject: z.string({ required_error: "Subject is required for Standard templates." }),
-  }),
-  createTemplateBaseBodySchema.extend({
-    TemplateType: z.literal("Layout"),
-    Subject: z.undefined({ errorMap: () => ({ message: "Subject is not allowed for Layout templates." }) }).optional(), // Explicitly disallow/ignore Subject for Layout
-  }),
-]).refine(data => data.HtmlBody || data.TextBody, {
-  message: "Either HtmlBody or TextBody must be provided.",
-  path: ["HtmlBody"], // Path to report error, can be one or both
-});
-
+const createTemplateBodySchema = z
+  .discriminatedUnion("TemplateType", [
+    createTemplateBaseBodySchema.extend({
+      TemplateType: z.literal("Standard").default("Standard"),
+      Subject: z.string({
+        required_error: "Subject is required for Standard templates.",
+      }),
+    }),
+    createTemplateBaseBodySchema.extend({
+      TemplateType: z.literal("Layout"),
+      Subject: z
+        .undefined({
+          errorMap: () => ({
+            message: "Subject is not allowed for Layout templates.",
+          }),
+        })
+        .optional(), // Explicitly disallow/ignore Subject for Layout
+    }),
+  ])
+  .refine((data) => data.HtmlBody || data.TextBody, {
+    message: "Either HtmlBody or TextBody must be provided.",
+    path: ["HtmlBody"], // Path to report error, can be one or both
+  })
 
 const createTemplateResponseSchema = z.object({
   TemplateId: z.number().int(),
@@ -41,11 +50,11 @@ const createTemplateResponseSchema = z.object({
 
 export default withRouteSpec({
   methods: ["POST"],
-  jsonRequestBody: createTemplateBodySchema,
+  jsonBody: createTemplateBodySchema,
   jsonResponse: createTemplateResponseSchema,
   auth: "none", // Assuming no auth for this fake endpoint
-} as const)(async (req, ctx) => {
-  const templateDataFromRequest = req.json // Winterspec already parsed and validated
+})(async (req, ctx) => {
+  const templateDataFromRequest = req.jsonBody // Winterspec already parsed and validated
 
   // Prepare data for the database client
   // The schema validation ensures TemplateType is set.
@@ -55,7 +64,10 @@ export default withRouteSpec({
     Alias: templateDataFromRequest.Alias,
     HtmlBody: templateDataFromRequest.HtmlBody,
     TextBody: templateDataFromRequest.TextBody,
-    Subject: templateDataFromRequest.TemplateType === "Standard" ? templateDataFromRequest.Subject : undefined,
+    Subject:
+      templateDataFromRequest.TemplateType === "Standard"
+        ? templateDataFromRequest.Subject
+        : undefined,
     TemplateType: templateDataFromRequest.TemplateType, // This will be "Standard" or "Layout"
     LayoutTemplate: templateDataFromRequest.LayoutTemplate,
   }

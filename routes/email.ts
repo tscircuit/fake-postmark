@@ -14,16 +14,24 @@ const sendEmailRequestBodySchema = z.object({
   HtmlBody: z.string().optional(),
   TextBody: z.string().optional(),
   ReplyTo: z.string().email().optional(),
-  Headers: z.array(z.object({ Name: z.string(), Value: z.string() })).optional(), // Postmark expects an array of {Name: string, Value: string}
+  Headers: z
+    .array(z.object({ Name: z.string(), Value: z.string() }))
+    .optional(), // Postmark expects an array of {Name: string, Value: string}
   TrackOpens: z.boolean().optional(),
-  TrackLinks: z.enum(["None", "HtmlAndText", "HtmlOnly", "TextOnly"]).optional(),
+  TrackLinks: z
+    .enum(["None", "HtmlAndText", "HtmlOnly", "TextOnly"])
+    .optional(),
   Metadata: z.record(z.string()).optional(),
-  Attachments: z.array(z.object({
-    Name: z.string(),
-    Content: z.string(), // Base64 encoded content
-    ContentType: z.string(),
-    ContentID: z.string().nullable().optional(),
-  })).optional(),
+  Attachments: z
+    .array(
+      z.object({
+        Name: z.string(),
+        Content: z.string(), // Base64 encoded content
+        ContentType: z.string(),
+        ContentID: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
   MessageStream: z.string().optional(),
 })
 
@@ -38,11 +46,13 @@ const sendEmailResponseSchema = z.object({
 
 export default withRouteSpec({
   methods: ["POST"],
-  jsonRequestBody: sendEmailRequestBodySchema,
+  jsonBody: sendEmailRequestBodySchema,
   jsonResponse: sendEmailResponseSchema,
-  commonParams: z.object({
-    // Postmark uses X-Postmark-Server-Token in headers, which winterspec can map
-  }).optional(),
+  commonParams: z
+    .object({
+      // Postmark uses X-Postmark-Server-Token in headers, which winterspec can map
+    })
+    .optional(),
   auth: "none", // Assuming no auth for this fake endpoint for now
 } as const)(async (req, ctx) => {
   const emailDataFromRequest = await req.json()
@@ -57,7 +67,9 @@ export default withRouteSpec({
     // For simplicity, we'll assume the client sends a flat object or we ignore this mismatch for the fake.
     // If Headers are provided in the expected array format, convert them:
     Headers: emailDataFromRequest.Headers
-      ? Object.fromEntries(emailDataFromRequest.Headers.map(h => [h.Name, h.Value]))
+      ? Object.fromEntries(
+          emailDataFromRequest.Headers.map((h) => [h.Name, h.Value]),
+        )
       : undefined,
   }
 
